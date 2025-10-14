@@ -36,7 +36,7 @@ public class Warehouse {
     }
 
     public List<Product> getProducts() {
-        return Collections.unmodifiableList(products.values().stream().toList());
+        return products.values().stream().toList();
     }
 
     public Optional<Product> getProductById(UUID id) {
