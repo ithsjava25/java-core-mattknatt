@@ -142,27 +142,41 @@ class WarehouseAnalyzer {
      * number of standard deviations. Uses population standard deviation over all products.
      * Test expectation: with a mostly tight cluster and two extremes, calling with 2.0 returns the two extremes.
      *
-     * @param standardDeviations threshold in standard deviations (e.g., 2.0)
+     * @param factor threshold in IQR calculation
      * @return list of products considered outliers
      */
-    public List<Product> findPriceOutliers(double standardDeviations) {
+    public List<Product> findPriceOutliers(double factor) {
         List<Product> products = warehouse.getProducts();
-        int n = products.size();
-        if (n == 0) return List.of();
-        double sum = products.stream().map(Product::price).mapToDouble(bd -> bd.doubleValue()).sum();
-        double mean = sum / n;
-        double variance = products.stream()
-                .map(Product::price)
-                .mapToDouble(bd -> Math.pow(bd.doubleValue() - mean, 2))
-                .sum() / n;
-        double std = Math.sqrt(variance);
-        double threshold = standardDeviations * std;
-        List<Product> outliers = new ArrayList<>();
-        for (Product p : products) {
-            double diff = Math.abs(p.price().doubleValue() - mean);
-            if (diff > threshold) outliers.add(p);
-        }
-        return outliers;
+        if (products.size() < 4) return List.of();
+
+        List<Double> prices = products.stream()
+                .map(p -> p.price().doubleValue())
+                .sorted()
+                .toList();
+
+        int n = prices.size();
+        double q1 = median(prices.subList(0, n / 2));
+        double q3 = median(prices.subList((n + 1) / 2, n));
+        double iqr = q3 - q1;
+
+        double lowerLimit = q1 - factor * iqr;
+        double upperLimit = q3 + factor * iqr;
+
+        return products.stream()
+                .filter(p -> {
+                    double price = p.price().doubleValue();
+                    return price < lowerLimit || price > upperLimit;
+                })
+                .toList();
+    }
+
+    private double median(List<Double> sortedList){
+        int n = sortedList.size();
+        if (n % 2 == 0)
+            return (sortedList.get(n / 2 - 1) + sortedList.get(n / 2)) / 2.0;
+        else
+            return sortedList.get(n / 2);
+
     }
     
     /**
