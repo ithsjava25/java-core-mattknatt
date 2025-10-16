@@ -137,11 +137,13 @@ class WarehouseAnalyzer {
     }
     
     /**
-     * Identifies products whose price deviates from the mean by more than the specified
-     * number of standard deviations. Uses population standard deviation over all products.
-     * Test expectation: with a mostly tight cluster and two extremes, calling with 2.0 returns the two extremes.
+     * Identifies products whose prices are statistical outliers,
+     * using the interquartile range (IQR) method.
+     * Products with prices outside the IQR threshold are considered outliers.
+     * Test expectation: with a mostly tight cluster and two extremes,
+     * calling with 1.5 (the typical IQR threshold) returns the two extremes.
      *
-     * @param factor threshold in IQR calculation
+     * @param factor multiplier in IQR calculation
      * @return list of products considered outliers
      */
     public List<Product> findPriceOutliers(double factor) {
