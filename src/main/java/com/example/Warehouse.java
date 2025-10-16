@@ -77,8 +77,8 @@ public class Warehouse {
 
     public List<Product> getChangedProducts() {
         return changedProductIds.stream()
+                .filter(products::containsKey)
                 .map(products::get)
-                .filter(java.util.Objects::nonNull)
                 .toList();
     }
 
