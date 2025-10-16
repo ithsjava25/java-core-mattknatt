@@ -1,7 +1,7 @@
 package com.example;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
@@ -138,31 +138,45 @@ class WarehouseAnalyzer {
     }
     
     /**
-     * Identifies products whose price deviates from the mean by more than the specified
-     * number of standard deviations. Uses population standard deviation over all products.
-     * Test expectation: with a mostly tight cluster and two extremes, calling with 2.0 returns the two extremes.
+     * Identifies products whose prices are statistical outliers,
+     * using the interquartile range (IQR) method.
+     * Products with prices outside the IQR threshold are considered outliers.
+     * Test expectation: with a mostly tight cluster and two extremes,
+     * calling with 1.5 (the typical IQR threshold) returns the two extremes.
      *
-     * @param standardDeviations threshold in standard deviations (e.g., 2.0)
+     * @param factor multiplier in IQR calculation
      * @return list of products considered outliers
      */
-    public List<Product> findPriceOutliers(double standardDeviations) {
+    public List<Product> findPriceOutliers(double factor) {
         List<Product> products = warehouse.getProducts();
-        int n = products.size();
-        if (n == 0) return List.of();
-        double sum = products.stream().map(Product::price).mapToDouble(bd -> bd.doubleValue()).sum();
-        double mean = sum / n;
-        double variance = products.stream()
-                .map(Product::price)
-                .mapToDouble(bd -> Math.pow(bd.doubleValue() - mean, 2))
-                .sum() / n;
-        double std = Math.sqrt(variance);
-        double threshold = standardDeviations * std;
-        List<Product> outliers = new ArrayList<>();
-        for (Product p : products) {
-            double diff = Math.abs(p.price().doubleValue() - mean);
-            if (diff > threshold) outliers.add(p);
-        }
-        return outliers;
+        if (products.size() < 4) return List.of();
+
+        List<Double> prices = products.stream()
+                .map(p -> p.price().doubleValue())
+                .sorted()
+                .toList();
+
+        int n = prices.size();
+        double q1 = median(prices.subList(0, n / 2));
+        double q3 = median(prices.subList((n + 1) / 2, n));
+        double iqr = q3 - q1;
+
+        double lowerLimit = q1 - factor * iqr;
+        double upperLimit = q3 + factor * iqr;
+
+        return products.stream()
+                .filter(p -> {
+                    double price = p.price().doubleValue();
+                    return price < lowerLimit || price > upperLimit;
+                })
+                .toList();
+    }
+
+    private double median(List<Double> sortedList){
+        int n = sortedList.size();
+        return n % 2 == 0
+                ? (sortedList.get(n/2 - 1) + sortedList.get(n/2)) / 2.0
+                : sortedList.get(n/2);
     }
     
     /**
@@ -245,7 +259,6 @@ class WarehouseAnalyzer {
      *    when percentage exceeds 70%.
      *  - Category diversity: count of distinct categories in the inventory. The tests expect at least 2.
      *  - Convenience booleans: highValueWarning (percentage > 70%) and minimumDiversity (category count >= 2).
-     *
      * Note: The exact high-value threshold is implementation-defined, but the provided tests create a clear
      * separation using very expensive electronics (e.g., 2000) vs. low-priced food items (e.g., 10),
      * allowing percentage computation regardless of the chosen cutoff as long as it matches the scenario.
@@ -295,7 +308,7 @@ class WarehouseAnalyzer {
 /**
  * Represents a group of products for shipping
  */
-class ShippingGroup {
+class ShippingGroup implements Serializable {
     private final List<Shippable> products;
     private final Double totalWeight;
     private final BigDecimal totalShippingCost;
