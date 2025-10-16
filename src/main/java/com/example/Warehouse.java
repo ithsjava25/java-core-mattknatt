@@ -32,7 +32,10 @@ public class Warehouse {
         if (product == null) {
             throw new IllegalArgumentException("Product cannot be null.");
         }
-        products.putIfAbsent(product.id(), product);
+        if (products.putIfAbsent(product.id(), product) == null) {
+            changedProductIds.add(product.id());
+        }
+
     }
 
     public List<Product> getProducts() {

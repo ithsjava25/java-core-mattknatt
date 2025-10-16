@@ -1,5 +1,6 @@
 package com.example;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -173,11 +174,9 @@ class WarehouseAnalyzer {
 
     private double median(List<Double> sortedList){
         int n = sortedList.size();
-        if (n % 2 == 0)
-            return (sortedList.get(n / 2 - 1) + sortedList.get(n / 2)) / 2.0;
-        else
-            return sortedList.get(n / 2);
-
+        return n % 2 == 0
+                ? (sortedList.get(n/2 - 1) + sortedList.get(n/2)) / 2.0
+                : sortedList.get(n/2);
     }
     
     /**
@@ -309,7 +308,7 @@ class WarehouseAnalyzer {
 /**
  * Represents a group of products for shipping
  */
-class ShippingGroup {
+class ShippingGroup implements Serializable {
     private final List<Shippable> products;
     private final Double totalWeight;
     private final BigDecimal totalShippingCost;

@@ -11,7 +11,7 @@ public abstract class Product {
     private final Category category;
     private BigDecimal price;
 
-    protected Product(UUID id, String name, Category category, BigDecimal price) {
+    Product(UUID id, String name, Category category, BigDecimal price) {
         this.id = Objects.requireNonNull(id, "ID can't be null");
         this.name = Objects.requireNonNull(name, "Name can't be null");
         this.category = Objects.requireNonNull(category, "Category can't be null");
@@ -35,7 +35,7 @@ public abstract class Product {
     }
 
     public void setPrice(BigDecimal price) {
-        if (price.doubleValue() < 0) throw new IllegalArgumentException("Price can't be null");
+        if (price == null || price.doubleValue() < 0) throw new IllegalArgumentException("Price can't be null or negative.");
         this.price = price;
     }
 
