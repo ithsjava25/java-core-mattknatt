@@ -1,5 +1,6 @@
 package com.example;
 
+import java.time.LocalDate;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
 import java.util.*;
@@ -90,9 +91,10 @@ public class Warehouse {
     }
 
     public List<Perishable> expiredProducts() {
+        LocalDate today = LocalDate.now();
         return products.values().stream()
                 .filter(p -> p instanceof Perishable)
-                .filter(p -> ((Perishable) p).isExpired())
+                .filter(p -> ((Perishable) p).isExpired(today))
                 .map(p -> (Perishable) p)
                 .collect(Collectors.toList());
 
