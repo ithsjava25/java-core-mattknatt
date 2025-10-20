@@ -18,7 +18,7 @@ public abstract class Product {
         this.price = Objects.requireNonNull(price, "Price can't be null");
     }
 
-    public UUID id() {
+    public UUID uuid() {
         return id;
     }
 

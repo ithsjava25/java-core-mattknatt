@@ -28,13 +28,20 @@ public class Warehouse {
         return WAREHOUSES.computeIfAbsent(name, Warehouse::new);
     }
 
+    public static Warehouse getInstance() {
+        return getInstance("DefaultWarehouse");
+    }
+
     public void addProduct(Product product) {
         if (product == null) {
             throw new IllegalArgumentException("Product cannot be null.");
         }
-        if (products.putIfAbsent(product.id(), product) == null) {
-            changedProductIds.add(product.id());
+        Product existingProduct = products.putIfAbsent(product.uuid(), product);
+        if (existingProduct != null) {
+            throw new IllegalArgumentException("Product with that id already exists, use updateProduct for updates.");
         }
+
+        changedProductIds.add(product.uuid());
 
     }
 
